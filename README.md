@@ -8,4 +8,4 @@ transformar a busca atual em um Minimax com profundidade ajustável, corrigir a 
 corrigir a pontuação de xeque, mate e empate, melhorar a avaliação com mobilidade, desenvolvimento, segurança das peças e estrutura de peões, além de ajustar os pesos. Também deve testar posições diferentes e explicar a heurística no relatório.
 
 **Ryaj (Otimização da busca):**  
-implementar a poda alfa-beta, ordenar os movimentos mais importantes primeiro, contar os nós analisados e podados, medir o tempo da busca e comparar o desempenho antes e depois das melhorias. Também deve organizar esses resultados no relatório.
+implementar as podas, ordenar os movimentos mais importantes primeiro, contar os nós analisados e podados, medir o tempo da busca e comparar o desempenho antes e depois das melhorias. Também deve organizar esses resultados no relatório.
