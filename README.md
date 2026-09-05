@@ -1,11 +1,11 @@
-João (Tabuleiro e partida):
-organizar a classe `ChessBoard`, validar as jogadas, fazer o agente começar com as brancas, criar o fluxo completo da partida, alternar os turnos, mostrar o tabuleiro, salvar o histórico e detectar o fim do jogo.
+**João (Integração do agente):**  
+remover as jogadas fixas, fazer o programa executar a jogada escolhida pela busca, criar o ciclo da partida contra a LLM, validar as jogadas recebidas, guardar o histórico e encerrar o jogo corretamente. Também deve testar essa parte e explicá-la no relatório.
 
-Gabriel (Minimax):  
-melhorar o algoritmo de busca, permitir diferentes profundidades, corrigir a lógica de maximização e minimização, tratar o fim da partida, escolher a melhor jogada e ligar o Minimax ao fluxo do jogo.
+**Gabriel (Minimax):**  
+transformar a busca atual em um Minimax com profundidade ajustável, corrigir a alternância entre as jogadas das brancas e as respostas das pretas, tratar posições finais e retornar a melhor jogada. Também deve testar diferentes profundidades e explicar o Minimax no relatório.
 
-Mateus (Função heurística):  
-melhorar a avaliação do tabuleiro, corrigir os valores de xeque, mate e empate, avaliar material, controle do centro, mobilidade, segurança do rei, desenvolvimento das peças e ajustar os pesos da heurística.
+**Mateus (Função heurística):**  
+corrigir a pontuação de xeque, mate e empate, melhorar a avaliação com mobilidade, desenvolvimento, segurança das peças e estrutura de peões, além de ajustar os pesos. Também deve testar posições diferentes e explicar a heurística no relatório.
 
-Ryaj (Poda e desempenho): 
-implementar as podas, ordenar as jogadas, contar os nós analisados e podados, medir o tempo da busca, comparar o Minimax normal com a versão otimizada e definir uma profundidade viável para as partidas.
+**Ryaj (Otimização da busca):**  
+implementar a poda alfa-beta, ordenar os movimentos mais importantes primeiro, contar os nós analisados e podados, medir o tempo da busca e comparar o desempenho antes e depois das melhorias. Também deve organizar esses resultados no relatório.
