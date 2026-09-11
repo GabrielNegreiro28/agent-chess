@@ -1,0 +1,244 @@
+\documentclass[12pt,a4paper]{article}
+
+% ---------------------------------------------------------------
+% Pacotes
+% ---------------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazilian]{babel}
+\usepackage{lmodern}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+
+% ---------------------------------------------------------------
+% Estilo dos trechos de código
+% ---------------------------------------------------------------
+\definecolor{codebg}{RGB}{245,245,245}
+\definecolor{codekw}{RGB}{0,0,160}
+\definecolor{codecm}{RGB}{90,120,90}
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{codekw}\bfseries,
+  commentstyle=\color{codecm}\itshape,
+  backgroundcolor=\color{codebg},
+  frame=single,
+  framerule=0pt,
+  breaklines=true,
+  showstringspaces=false,
+  columns=fullflexible,
+  keepspaces=true,
+  literate=
+    {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+    {â}{{\^a}}1 {ê}{{\^e}}1 {ô}{{\^o}}1 {ã}{{\~a}}1 {õ}{{\~o}}1
+    {ç}{{\c{c}}}1 {à}{{\`a}}1
+}
+
+\newcommand{\cp}{\,\text{cp}}
+
+% ---------------------------------------------------------------
+% Documento
+% ---------------------------------------------------------------
+\begin{document}
+
+% ===============================================================
+% CAPA
+% ===============================================================
+\begin{titlepage}
+  \centering
+  \vspace*{1.5cm}
+
+  {\Large\textsc{Instituto Tecnológico de Aeronáutica}\par}
+
+  \vspace{4cm}
+
+  {\Huge\bfseries Projeto Xadrez Heurístico\par}
+  \vspace{0.5cm}
+  {\Large Relatório do Laboratório\par}
+
+  \vspace{4cm}
+
+  {\large\bfseries Membros da Equipe\par}
+  \vspace{0.4cm}
+  {\large
+    Gabriel Negreiro\par
+    João Gabriel\par
+    Marcello Ryaj\par
+    Mateus Levi\par
+  }
+
+  \vfill
+
+  {\large CMC-15 -- Inteligência Artificial\par}
+  {\large Prof. Paulo André L. de Castro\par}
+  \vspace{0.6cm}
+  {\large São José dos Campos\par}
+  {\large Setembro de 2026\par}
+\end{titlepage}
+
+% ===============================================================
+% FUNÇÃO HEURÍSTICA
+% ===============================================================
+\section{Função Heurística}
+
+A função heurística atribui um valor numérico a uma posição quando a
+busca não alcança um estado terminal; o Minimax apenas propaga para a
+raiz os valores que ela produz nas folhas. Adotou-se a convenção de que
+\textbf{valores positivos favorecem as brancas} e \textbf{negativos
+favorecem as pretas}. A função recebe uma posição e um lance candidato,
+aplica o lance numa cópia do tabuleiro e avalia a posição resultante.
+
+A maior parte dos termos e dos pesos foi retirada da \emph{Chess
+Programming Wiki}, em especial da \emph{Simplified Evaluation Function}
+de Michniewski~\cite{cpw-sef}, e das páginas sobre mobilidade e estrutura
+de peões~\cite{cpw-mobility,cpw-pawn}. Aqui descrevemos apenas o
+essencial de cada termo e as decisões que foram nossas; os detalhes das
+tabelas e a justificativa de cada valor estão nas referências.
+
+\subsection{Problemas da função original}
+
+A versão fornecida tinha três defeitos que comprometiam a busca:
+\textbf{(i)} todo xeque-mate valia $-100$, sem distinguir quem dava o
+mate, então o agente nunca buscava o mate ativamente;
+\textbf{(ii)} qualquer xeque retornava $-5$ imediatamente, descartando a
+contagem de material;
+\textbf{(iii)} o empate valia $-10$, pior que muitas posições perdidas.
+Além disso, a avaliação posicional se resumia ao controle das quatro
+casas centrais e a um termo simples de segurança do rei.
+
+\subsection{Valores terminais}
+
+Após aplicar o lance, \texttt{board.turn} indica o lado a jogar, que em
+um xeque-mate é o perdedor. Assim, mate com as pretas a jogar vale
+$+100\,000$ e com as brancas a jogar vale $-100\,000$; o valor domina o
+máximo material possível ($\approx 3\,900\cp$). Todo outro fim de jogo
+vale exatamente $0$, de modo que o agente prefere empate a derrota e
+aceita o empate quando está em desvantagem. O xeque deixou de ser um
+retorno antecipado e virou apenas uma penalidade dentro da segurança do
+rei.
+
+\subsection{Material e tabelas posicionais}
+
+Os valores de material foram convertidos para centipawns conforme
+\cite{cpw-sef}: peão 100, cavalo 320, bispo 330, torre 500, dama 900 e
+rei 0 (ambos os lados sempre têm um). Da mesma fonte vieram as
+\emph{piece-square tables}: um bônus por casa para cada tipo de peça,
+que substitui o controle de centro original e cobre também
+desenvolvimento e roque, já que casas iniciais pontuam mal e o rei
+pontua bem em \texttt{g1}/\texttt{c1}. As tabelas são escritas do ponto
+de vista das brancas com a oitava fileira primeiro; como a biblioteca
+\texttt{chess} numera as casas a partir de \texttt{a1 = 0}, as brancas
+indexam com \texttt{square\_mirror(square)} e as pretas com
+\texttt{square} diretamente.
+
+\subsection{Mobilidade}
+
+Diferença entre o número de lances legais das brancas e das pretas,
+ponderada por $5\cp$ por lance~\cite{cpw-mobility}. Como
+\texttt{legal\_moves} só enumera o lado a jogar, a contagem é feita numa
+cópia do tabuleiro invertendo \texttt{turn}; alterar o turno no
+tabuleiro real corromperia a partida.
+
+\subsection{Estrutura de peões}
+
+A partir de uma contagem de peões por coluna, penalizam-se
+\textbf{peões dobrados} ($n$ peões na mesma coluna contam $n-1$
+defeitos) e \textbf{peões isolados} (sem peão amigo nas colunas
+adjacentes, com as bordas \texttt{a} e \texttt{h} tratadas como vazias
+para evitar que \texttt{structure[n-1]} dê a volta em Python). Cada
+defeito custa $50\cp$, o $-0{,}5$ peão de Shannon~\cite{cpw-pawn}.
+
+\subsection{Segurança das peças}
+
+Uma peça está \emph{pendurada} quando é atacada e não tem defensor
+(\texttt{attackers} da cor oposta $>0$ e da própria cor $=0$; o rei é
+ignorado, pois rei atacado é xeque). A penalidade é de \textbf{10\% do
+valor da peça}, não 100\%: dentro do horizonte o Minimax já enxerga a
+captura real, e penalizar integralmente contaria a perda duas vezes. O
+termo apenas sinaliza o risco de peças capturáveis além do horizonte.
+
+\subsection{Composição final}
+
+Defeitos são subtraídos para as brancas e somados para as pretas:
+\begin{align*}
+  f(s) ={}& \text{material} + \text{PST}
+          + 5\,(\text{mob}_B - \text{mob}_P)
+          - 50\,(\text{def}_B - \text{def}_P) \\
+        & - 0{,}1\,(\text{pend}_B - \text{pend}_P)
+          + (\text{rei}_B - \text{rei}_P),
+\end{align*}
+onde o termo de segurança do rei, mantido da versão original e
+reescalado, dá $-15\cp$ por casa vazia no escudo de peões e $-50\cp$ se
+o lado está em xeque.
+
+\subsection{Testes}
+
+Cada termo foi validado em posições controladas cujo valor esperado foi
+conferido manualmente. Todos os casos passaram.
+
+\begin{table}[h]
+  \centering
+  \caption{Casos de teste da função heurística.}
+  \small
+  \begin{tabular}{>{\raggedright\arraybackslash}p{3.4cm} >{\raggedright\arraybackslash}p{6.8cm} r}
+    \toprule
+    Caso & Posição & Esperado = Obtido \\
+    \midrule
+    Mate dado pelas brancas
+      & Mate do pastor: \texttt{1.e4 e5 2.Bc4 Nc6 3.Qh5 Nf6 4.Qxf7\#}
+      & $100\,000$ \\
+    Mate dado pelas pretas
+      & Mate do bobo: \texttt{1.f3 e5 2.g4 Qh4\#}
+      & $-100\,000$ \\
+    Afogamento
+      & \texttt{7k/8/6K1/8/8/8/8/5Q2 w}, lance \texttt{Qf7}
+      & $0$ \\
+    Peões dobrados
+      & Brancas com peões em a2, b2, b3, e2, h2
+      & $1$ \\
+    Peões isolados
+      & Mesma posição: colunas \texttt{e} e \texttt{h} sem vizinhas
+      & $2$ \\
+    Penduradas das pretas
+      & \texttt{r3k3/8/3p4/4N3/8/2b5/3Q4/4K3 w}: peão d6 e bispo c3, $0{,}1\times(100+330)$
+      & $43{,}0$ \\
+    Penduradas das brancas
+      & Mesma posição: cavalo e5, $0{,}1\times 320$
+      & $32{,}0$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ===============================================================
+% REFERÊNCIAS
+% ===============================================================
+\begin{thebibliography}{9}
+\raggedright
+
+\bibitem{cpw-sef}
+Chess Programming Wiki. \emph{Simplified Evaluation Function}
+(Tomasz Michniewski).
+Disponível em: \url{https://www.chessprogramming.org/Simplified_Evaluation_Function}.
+Acesso em: set.\ 2026.
+
+\bibitem{cpw-mobility}
+Chess Programming Wiki. \emph{Mobility}.
+Disponível em: \url{https://www.chessprogramming.org/Mobility}.
+Acesso em: set.\ 2026.
+
+\bibitem{cpw-pawn}
+Chess Programming Wiki. \emph{Pawn Structure}.
+Disponível em: \url{https://www.chessprogramming.org/Pawn_Structure}.
+Acesso em: set.\ 2026.
+
+\end{thebibliography}
+
+\end{document}
